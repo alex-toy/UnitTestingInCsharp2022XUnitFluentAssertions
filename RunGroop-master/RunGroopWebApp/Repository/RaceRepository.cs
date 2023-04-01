@@ -54,7 +54,8 @@ namespace RunGroopWebApp.Repository
 
         public async Task<int> GetCountByCategoryAsync(RaceCategory category)
         {
-            return await _context.Races.CountAsync(r => r.RaceCategory == category);
+            var count = await _context.Races.CountAsync(r => r.RaceCategory == category);
+            return count;
         }
 
         public async Task<IEnumerable<Race>> GetSliceAsync(int offset, int size)

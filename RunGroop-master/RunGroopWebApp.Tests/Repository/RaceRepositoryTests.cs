@@ -1,9 +1,12 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using RunGroopWebApp.Data;
+using RunGroopWebApp.Data.Enum;
 using RunGroopWebApp.Models;
 using RunGroopWebApp.Repository;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -28,6 +31,13 @@ namespace RunGroopWebApp.Tests.Repository
                     {
                         Title = $"Race {i}",
                         Description = $"This is the description of the race {i}",
+                        RaceCategory = RaceCategory.FiveK,
+                        Address = new Address()
+                        {
+                            City = $"city {i}",
+                            State = $"state {i}",
+                            Street = $"street {i}"
+                        }
                     };
                     databaseContext.Races.Add(race);
                     await databaseContext.SaveChangesAsync();
@@ -59,130 +69,107 @@ namespace RunGroopWebApp.Tests.Repository
             var dbContext = await GetDbContext();
             var raceRepository = new RaceRepository(dbContext);
 
-            Race? actual = await raceRepository.GetByIdAsync(id);
+            Task<Race?>? actual = raceRepository.GetByIdAsync(id);
 
-            actual.Should().NotBeNull();
-            actual.Title.Should().Be("Race 1");
             actual.Should().BeOfType<Task<Race>>();
+            string title = (await actual).Title;
+            title.Should().Be("Race 0");
         }
 
-        //[Fact]
-        //public async void ClubRepository_GetAll_ReturnsList()
-        //{
-        //    //Arrange
-        //    var dbContext = await GetDbContext();
-        //    var clubRepository = new ClubRepository(dbContext);
+        [Fact]
+        public async void GetAll_should_return_list()
+        {
+            var dbContext = await GetDbContext();
+            var raceRepository = new RaceRepository(dbContext);
 
-        //    //Act
-        //    var result = await clubRepository.GetAll();
+            var actual = await raceRepository.GetAll();
 
-        //    //Assert
-        //    result.Should().NotBeNull();
-        //    result.Should().BeOfType<List<Club>>();
-        //}
+            actual.Should().NotBeNull();
+            actual.Should().BeOfType<List<Race>>();
+        }
 
-        //[Fact]
-        //public async void ClubRepository_SuccessfulDelete_ReturnsTrue()
-        //{
-        //    //Arrange
-        //    var club = new Club()
-        //    {
-        //        Title = "Running Club 1",
-        //        Image = "https://www.eatthis.com/wp-content/uploads/sites/4/2020/05/running.jpg?quality=82&strip=1&resize=640%2C360",
-        //        Description = "This is the description of the first cinema",
-        //        ClubCategory = ClubCategory.City,
-        //        Address = new Address()
-        //        {
-        //            Street = "123 Main St",
-        //            City = "Charlotte",
-        //            State = "NC"
-        //        }
-        //    };
-        //    var dbContext = await GetDbContext();
-        //    var clubRepository = new ClubRepository(dbContext);
+        [Fact]
+        public async void SuccessfulDelete_should_return_true()
+        {
+            var race = new Race()
+            {
+                Title = "Running Club 1",
+                Image = "https://www.eatthis.com/wp-content/uploads/sites/4/2020/05/running.jpg?quality=82&strip=1&resize=640%2C360",
+                Description = "This is the description of the first cinema",
+                Address = new Address()
+                {
+                    Street = "123 Main St",
+                    City = "Charlotte",
+                    State = "NC"
+                }
+            };
+            var dbContext = await GetDbContext();
+            var clubRepository = new RaceRepository(dbContext);
 
-        //    //Act
-        //    clubRepository.Add(club);
-        //    var result = clubRepository.Delete(club);
-        //    var count = await clubRepository.GetCountAsync();
+            clubRepository.Add(race);
+            bool actual = clubRepository.Delete(race);
+            int count = await clubRepository.GetCountAsync();
 
-        //    //Assert
-        //    result.Should().BeTrue();
-        //    count.Should().Be(0);
-        //}
+            actual.Should().BeTrue();
+            count.Should().Be(10);
+        }
 
-        //[Fact]
-        //public async void ClubRepository_GetCountAsync_ReturnsInt()
-        //{
-        //    //Arrange
-        //    var club = new Club()
-        //    {
-        //        Title = "Running Club 1",
-        //        Image = "https://www.eatthis.com/wp-content/uploads/sites/4/2020/05/running.jpg?quality=82&strip=1&resize=640%2C360",
-        //        Description = "This is the description of the first cinema",
-        //        ClubCategory = ClubCategory.City,
-        //        Address = new Address()
-        //        {
-        //            Street = "123 Main St",
-        //            City = "Charlotte",
-        //            State = "NC"
-        //        }
-        //    };
-        //    var dbContext = await GetDbContext();
-        //    var clubRepository = new ClubRepository(dbContext);
+        [Fact]
+        public async void GetCountAsync_should_return_int()
+        {
+            var race = new Race()
+            {
+                Title = "Running Club 1",
+                Description = "This is the description of the first cinema",
+                Address = new Address()
+                {
+                    Street = "123 Main St",
+                    City = "Charlotte",
+                    State = "NC"
+                }
+            };
+            var dbContext = await GetDbContext();
+            var raceRepository = new RaceRepository(dbContext);
 
-        //    //Act
-        //    clubRepository.Add(club);
-        //    var result = await clubRepository.GetCountAsync();
+            raceRepository.Add(race);
+            int raceCount = await raceRepository.GetCountAsync();
 
-        //    //Assert
-        //    result.Should().Be(1);
-        //}
+            raceCount.Should().Be(11);
+        }
 
-        //[Fact]
-        //public async void ClubRepository_GetAllStates_ReturnsList()
-        //{
-        //    //Arrange
-        //    var dbContext = await GetDbContext();
-        //    var clubRepository = new ClubRepository(dbContext);
+        [Theory]
+        [InlineData("city 0", 1)]
+        [InlineData("city 1", 1)]
+        [InlineData("city 2", 1)]
+        public async void GetAllRacesByCity_should_return_correct_count(string city, int count)
+        {
+            var dbContext = await GetDbContext();
+            var raceRepository = new RaceRepository(dbContext);
 
-        //    //Act
-        //    var result = await clubRepository.GetAllStates();
+            IEnumerable<Race>? actualRaces = await raceRepository.GetAllRacesByCity(city);
 
-        //    //Assert
-        //    result.Should().NotBeNull();
-        //    result.Should().BeOfType<List<State>>();
-        //}
+            actualRaces.Should().NotBeNull();
+            actualRaces.Should().BeOfType<List<Race>>();
+            actualRaces.ToList().Count.Should().Be(count);
+        }
 
-        //[Fact]
-        //public async void ClubRepository_GetClubsByState_ReturnsList()
-        //{
-        //    //Arrange
-        //    var state = "NC";
-        //    var club = new Club()
-        //    {
-        //        Title = "Running Club 1",
-        //        Image = "https://www.eatthis.com/wp-content/uploads/sites/4/2020/05/running.jpg?quality=82&strip=1&resize=640%2C360",
-        //        Description = "This is the description of the first cinema",
-        //        ClubCategory = ClubCategory.City,
-        //        Address = new Address()
-        //        {
-        //            Street = "123 Main St",
-        //            City = "Charlotte",
-        //            State = "NC"
-        //        }
-        //    };
-        //    var dbContext = await GetDbContext();
-        //    var clubRepository = new ClubRepository(dbContext);
+        [Fact]
+        public async void GetCountByCategoryAsync_should_return_correct_count()
+        {
+            RaceCategory category = RaceCategory.Marathon;
+            var race = new Race()
+            {
+                Title = "Running Club 1",
+                Description = "This is the description of the first cinema",
+                RaceCategory = category
+            };
+            var dbContext = await GetDbContext();
+            var raceRepository = new RaceRepository(dbContext);
+            raceRepository.Add(race);
 
-        //    //Act
-        //    clubRepository.Add(club);
-        //    var result = await clubRepository.GetClubsByState(state);
+            int actualRaceCount = await raceRepository.GetCountByCategoryAsync(category);
 
-        //    //Assert
-        //    result.Should().NotBeNull();
-        //    result.Should().BeOfType<List<Club>>();
-        //    result.First().Title.Should().Be("Running Club 1");
-        //}
+            actualRaceCount.Should().Be(1);
+        }
     }
 }
