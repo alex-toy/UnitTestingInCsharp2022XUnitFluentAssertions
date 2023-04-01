@@ -1,5 +1,7 @@
-﻿using FluentAssertions;
+﻿using FakeItEasy;
+using FluentAssertions;
 using FluentAssertions.Extensions;
+using NetworkUtility.DNS;
 using NetworkUtility.Ping;
 using System;
 using System.Collections.Generic;
@@ -12,19 +14,32 @@ namespace NetworkUtility.Tests.PingTests
     public class NetworkServiceTests
     {
         private readonly NetworkService _networkService;
+        private readonly IDNS _dns;
 
         public NetworkServiceTests()
         {
-            _networkService = new NetworkService();
+            _dns = A.Fake<IDNS>();
+            _networkService = new NetworkService(_dns);
         }
 
         [Fact]
-        public void SendPing_should_return_correct_string()
+        public void SendPing_should_return_Ping_When_DNS_success()
         {
+            A.CallTo(() => _dns.SendDNS()).Returns(true);
             string result = _networkService.SendPing();
 
             result.Should().NotBeNullOrEmpty();
             result.Should().Contain("Ping", Exactly.Once());
+        }
+
+        [Fact]
+        public void SendPing_should_not_return_Ping_When_DNS_failed()
+        {
+            A.CallTo(() => _dns.SendDNS()).Returns(false);
+            string result = _networkService.SendPing();
+
+            result.Should().NotBeNullOrEmpty();
+            result.Should().NotContain("Ping");
         }
 
         [Theory]

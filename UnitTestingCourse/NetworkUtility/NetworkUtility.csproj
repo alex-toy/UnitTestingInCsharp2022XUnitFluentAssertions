@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DNS\DNSService.cs" />
+    <Compile Include="DNS\IDNS.cs" />
     <Compile Include="Functions\WorldDumbestFunctions.cs" />
     <Compile Include="Ping\NetworkService.cs" />
     <Compile Include="Program.cs" />
